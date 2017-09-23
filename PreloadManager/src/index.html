@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Preloader Demo</title>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">-->
+    <meta name="viewport" content="width=750, user-scalable=no">
+    <meta name="format-detection" content="telephone=no"/>
+    <meta http-equiv="x-dns-prefetch-control" content="on">
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+
+    <style>
+        html,body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #canvas-frames {
+            width: 100%;
+            height: 100%;
+        }
+        .bottom {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: -70px;
+        }
+        .btn {
+            width: 5rem;
+            height: 3rem;
+            margin: 0px 30px;
+        }
+        .btn-play {
+            /*float: left;*/
+        }
+        .btn-pause {
+            /*float: right;*/
+        }
+        button  {
+            width: 100%;
+            height: 100%;
+            background-color: #00a1cb;
+        }
+        .loading {
+            position: absolute;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+
+<!--<div id="output" style="position: absolute;top:100px;z-index: 200;color:white"></div>-->
+<div class="loading">1%</div>
+<div class="main">
+    <div id="canvas-frames"></div>
+    <div class="bottom">
+        <div class="btn btn-play">
+            <button>播放</button>
+        </div>
+        <div class="btn btn-pause">
+            <button>暂停</button>
+        </div>
+    </div>
+</div>
+
+<!-- build:js ./js/libs.js -->
+<script src="./js/libs/preloadjs-0.6.2.min.js"></script>
+<script src="./js/preloader.js"></script>
+<script src="./js/config.js"></script>
+<script src="./js/frame-player.js"></script>
+<!-- endbuild -->
+
+<script language="JavaScript">
+    window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame;
+
+    var ua = {
+        Android: /Android/ig.test(navigator.userAgent),
+        IOS: /AppleWebKit/.test(navigator.userAgent) && /Mobile\/\w+/.test(navigator.userAgent),
+        QQAC_ANDROID: /(^| )QQAC_Client_Android( |\/|$)/i.test(navigator.userAgent),
+        QQAC_IOS: /(^| )QQAC_Client_iOS( |\/|$)/i.test(navigator.userAgent),
+        isWeixin: navigator.userAgent.toLowerCase().match(/MicroMessenger/i) == "micromessenger",
+    };
+
+    //微信wiewport不正常的解决方法 750px
+    var phoneWidth = parseInt(window.screen.width);
+    var phoneScale = (phoneWidth / 750);
+    var viewport = document.querySelector("meta[name=viewport]");
+    if (ua.isWeixin) {
+        viewport.setAttribute('content', 'width=750, initial-scale = ' + phoneScale + ', minimum-scale = ' + phoneScale + ', maximum-scale = ' + phoneScale + ', target-densitydpi=device-dpi,user-scalable=no');
+    } else {
+        viewport.setAttribute('content', 'width=750,user-scalable=no');
+        window.setTimeout(function () {
+            viewport.setAttribute('content', 'width=750,user-scalable=no');
+        }, 1000);
+    }
+    var sound_enter;
+
+    // ios 下可以通过该事件触发视频播放(亦可用来预缓冲) android 无用
+    document.addEventListener("WeixinJSBridgeReady", function () {
+        // video.style.display = "block";
+    }, false);
+
+    document.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+//        console.log('aaaa');
+    }, false);
+
+    window.addEventListener("load", function () {
+        preloader.init({
+            vt: 0,   // 虚拟loading时间（秒）
+        });
+        preloader.addAssets(config.assets,'./img/');
+        preloader.addAssets(config.media,'./media/');
+        preloader.onFileComplete = function(item){console.log(item)};
+        preloader.onLoadProgress = function(p){
+            console.log(p);
+            document.querySelector(".loading").innerHTML = Math.ceil(p*100)+'%';
+//            if(p==1)loadComplete();
+        };
+        preloader.onLoadComplete = function(result){
+            console.log(result);
+            sound_enter =result.sound;
+            initFrames(result.ani);
+            loadComplete();
+        };
+        preloader.load();
+
+        function loadComplete(){
+            document.querySelector(".loading").style.setProperty('display', 'none');
+            framePlayer.drawByFrame('ani', 0);
+        }
+
+        function initFrames(res){
+            framePlayer.init({
+                nodeName: '#canvas-frames',
+                nodeClass: 'frames',
+                width: 750,
+                height: 1206
+            });
+            framePlayer.addFrames('ani',res);
+
+        }
+
+        document.addEventListener('touchstart',onTouch, false);
+
+        function onTouch(e){
+            framePlayer.play('ani', 2500);
+            sound_enter.play();
+            document.removeEventListener('touchstart',onTouch);
+        }
+
+        document.querySelector(".btn-play button").addEventListener('touchstart',function(){
+            framePlayer.play('ani', 2500);
+            sound_enter.play();
+        }, false);
+        document.querySelector(".btn-pause button").addEventListener('touchstart',function(){
+            framePlayer.stop();
+            sound_enter.pause();
+        }, false);
+    });
+</script>
+</body>
+</html>
