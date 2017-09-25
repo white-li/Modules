@@ -1,5 +1,8 @@
 # PreloadManager 预加载模块
-[demo](http://display.6edigital.com/)
+
+[Preloader Demo](http://display.6edigital.com/labs/preloader/demo.html)
+\
+[Threeloader Demo](http://display.6edigital.com/labs/preloader/demo-threeLoader.html)
 ---
 ## 依赖库
 - [预加载库 preloadjs ^0.6.2](http://www.createjs.com/preloadjs)
